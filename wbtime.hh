@@ -1,6 +1,16 @@
 #pragma once
 
+#include <string>
 #include <ctime>
+#include <iostream>
+
+using std::string;
+using std::cout;
+using std::endl;
+
+enum LogTypes {
+  kHadoop
+};
 
 class WbTime {
  public:
@@ -13,7 +23,7 @@ class WbTime {
   bool operator>(const WbTime &t);
   bool operator<(const WbTime &t);
   static double get_duration(WbTime a, WbTime b);
-  static struct tm to_tm_zerosec(const WbTime &t);
+  static WbTime get_wbtime(const string &record, const LogTypes &log_type);
 
   int year_;
   int mon_;
@@ -24,6 +34,7 @@ class WbTime {
 
  private:
   static void swap(WbTime &a, WbTime &b);
+  static struct tm to_tm_zerosec(const WbTime &t);
 };
 
 WbTime::WbTime() {
@@ -147,8 +158,25 @@ double WbTime::get_duration(WbTime a, WbTime b) {
 
   tm_a = to_tm_zerosec(a);
   tm_b = to_tm_zerosec(b);
-  double diff = difftime(mktime(&tm_a), mktime(&tm_b));
+  double diff = difftime(mktime(&tm_b), mktime(&tm_a));
   diff += b.sec_ - a.sec_;
 
+
+
   return diff;
+}
+
+
+WbTime WbTime::get_wbtime(const string &record, const LogTypes &log_type) {
+  if (log_type == kHadoop) {
+    int year = stoi(record.substr(0, 4));
+    int mon = stoi(record.substr(5, 2));
+    int day = stoi(record.substr(8, 2));
+    int hour = stoi(record.substr(11, 2));
+    int min = stoi(record.substr(14, 2));
+    double sec = stoi(record.substr(17, 2)) + stod(record.substr(20, 3)) / 1000;
+    WbTime tmp(year, mon, day, hour, min, sec);
+    return tmp;
+  }
+  return WbTime(0, 0, 0, 0, 0, 0);
 }
